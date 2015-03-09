@@ -9,3 +9,6 @@ testing_ims, testing_labels = mndata.load_testing()
 # Transform everything into array
 training_ims = np.array(training_ims)
 training_labels = np.array(training_labels)
+
+# Make them binary
+training_ims[training_ims > 0] = 1

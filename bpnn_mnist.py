@@ -1,13 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from load_files import training_ims, training_labels
+from load_binary_files import training_ims, training_labels
 from init_functions import p_matrix, w_connectivity
+from corrup import distort_binnary
     
-
-# Transform everything into array
-training_ims = np.array(training_ims)
-training_labels = np.array(training_labels)
-
 # Select quantity of data to use
 N_data_total = len(training_labels)
 percentage = 0.05
@@ -26,16 +22,16 @@ beta[beta == 0] = 1.0 / N_to_use ** 2
 w = w_connectivity(p_vector, p_matrix, N_to_use)
 
 # Now we create a distorted pattern
-pattern = 3
-distorted_pattern = X[pattern] + np.random.randint(0, 256, len(X[pattern]))
-
+ 
 # Now we need to update the pattern
-o = distorted_pattern
+label = 2
+percentage = 0.1
+dis_pattern = distort_binnary(label, percentage, X)
 
 log_beta = np.log(beta)
 G = 1.1
 
-iterations = 10000
+iterations = 1000
 
 for t in range(iterations):
     s = log_beta + np.log(np.dot(w, o))
