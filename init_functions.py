@@ -34,7 +34,26 @@ def w_connectivity(p_vector, p_matrix, N_to_use):
     return w
 
 
-def connectivity(N_hypercolumns, units_per_hypercolumn, X):
+def prob(N_hypercolumns, units_per_hypercolumn, X):
+    """
+    Calculate probabalities for each of the units.
+    Returns an array of dimensions: (units_per_hypercolumn, N_hypercolumns)
+    Therefore the row indicates the hypercolumn and the column the unit
+    whitin a particular hypercolumn.
+
+    X first dimensions (rows) represents the different training examples
+    """
+
+    p = np.zeros((N_hypercolumns, units_per_hypercolumn))
+
+    for i in range(units_per_hypercolumn):
+        p[:, i] = np.sum(X == i, axis=0)
+
+    return p * 1.0 / X.shape[0]
+
+
+def connectivity(N_hypercolumns, units_per_hypercolumn, X,
+                 low_noise=10e-5, non_zero=True):
     """
     Calculates the connectivity matrix for a network with
     N_hypercolumns number of hypercolumns and neurons_per_hyper
@@ -46,19 +65,24 @@ def connectivity(N_hypercolumns, units_per_hypercolumn, X):
     w = np.zeros((N_hypercolumns, N_hypercolumns,
                   units_per_hypercolumn, units_per_hypercolumn))
 
+    p = prob(N_hypercolumns, units_per_hypercolumn, X)
+
     for h_pre in range(N_hypercolumns):
         for h_post in range(h_pre + 1, N_hypercolumns):
 
             aux = hypercolumn_connection(h_pre, h_post,
-                                         units_per_hypercolumn, X)
+                                         units_per_hypercolumn, p, X)
 
             w[h_pre, h_post, ...] = aux
             w[h_post, h_pre, ...] = aux
 
-    return w
+    if non_zero:
+        w[w == 0] = low_noise
+
+    return w / X.shape[0], p
 
 
-def hypercolumn_connection(h_pre, h_post, units_per_hypercolumn, X):
+def hypercolumn_connection(h_pre, h_post, units_per_hypercolumn, p, X):
     """
     Creates the connection between two hypercolumns, in this case
     fromm the h_pre hypercolumn to the h_post hypercolumn. Neurons
@@ -69,9 +93,15 @@ def hypercolumn_connection(h_pre, h_post, units_per_hypercolumn, X):
 
     for n_i in range(units_per_hypercolumn):
         for n_j in range(units_per_hypercolumn):
-            h_connectivity[n_i, n_j] = unitary_connection(h_pre, h_post,
-                                                          n_i, n_j, X)
+            joint = unitary_connection(h_pre, h_post, n_i, n_j, X)
+            product = p[h_pre, n_i] * p[h_post, n_j]
 
+            if product == 0:
+                h_connectivity[n_i, n_j] = 0
+            else:
+                h_connectivity[n_i, n_j] = joint / product
+
+                                                 
     return h_connectivity
 
 

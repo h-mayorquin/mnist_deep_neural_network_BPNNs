@@ -53,5 +53,6 @@ docs/_build/
 # PyBuilder
 target/
 
-# Temporary files
+# Temporary and emacs files
 *~
+*#
