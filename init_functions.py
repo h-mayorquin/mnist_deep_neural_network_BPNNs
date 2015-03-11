@@ -34,7 +34,7 @@ def w_connectivity(p_vector, p_matrix, N_to_use):
     return w
 
 
-def prob(N_hypercolumns, units_per_hypercolumn, X):
+def prob(N_hypercolumns, units_per_hypercolumn, low_noise, X):
     """
     Calculate probabalities for each of the units.
     Returns an array of dimensions: (units_per_hypercolumn, N_hypercolumns)
@@ -48,6 +48,8 @@ def prob(N_hypercolumns, units_per_hypercolumn, X):
 
     for i in range(units_per_hypercolumn):
         p[:, i] = np.sum(X == i, axis=0)
+
+    p[p == 0] = low_noise
 
     return p * 1.0 / X.shape[0]
 
@@ -65,7 +67,7 @@ def connectivity(N_hypercolumns, units_per_hypercolumn, X,
     w = np.zeros((N_hypercolumns, N_hypercolumns,
                   units_per_hypercolumn, units_per_hypercolumn))
 
-    p = prob(N_hypercolumns, units_per_hypercolumn, X)
+    p = prob(N_hypercolumns, units_per_hypercolumn, low_noise, X)
 
     for h_pre in range(N_hypercolumns):
         for h_post in range(h_pre + 1, N_hypercolumns):
