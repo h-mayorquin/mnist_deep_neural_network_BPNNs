@@ -5,7 +5,7 @@ from init_functions import connectivity
     
 # Select quantity of data to use
 N_data_total = len(training_labels)
-percentage = 0.1
+percentage = 0.8
 N_to_use = int(percentage * N_data_total)
 
 # Decide how much data to use
@@ -14,7 +14,7 @@ Y = training_labels[0:N_to_use]
 N_hypercolumns = X.shape[1]
 units_per_hypercolumn = 2
 
-w, p = connectivity(N_hypercolumns, units_per_hypercolumn, X)
+w, p = connectivity(N_hypercolumns, units_per_hypercolumn, X, low_noise=0.001)
 
 folder = './data/'
 name = 'saved_connectivity'

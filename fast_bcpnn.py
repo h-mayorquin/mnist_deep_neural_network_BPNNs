@@ -43,9 +43,15 @@ s = np.zeros(o.shape, dtype=float)
 noise = 10e-10
 double_bias = np.log(noise)
 
-iterations = 200
+iterations = 100
 to_store = np.zeros((6, N_hypercolumns, iterations))
-G = 0.01
+G = 0.0001
+counter_aux_1 = 0
+counter_aux_2 = 0
+counter = 0
+statistics1 = []
+statistics2 = []
+statistics3 = []
 
 for iter in xrange(iterations):
     print 'iter', iter
@@ -62,23 +68,36 @@ for iter in xrange(iterations):
 
             if (aux_1 > 0):
                 quantity_0 += np.log(aux_1)
+                counter_aux_1 = 0
             else:
                 quantity_0 += double_bias
+                counter_aux_1 = 1
 
             if (aux_2 > 0):
                 quantity_1 += np.log(aux_2)
+                counter_aux_2 = 0
             else:
                 quantity_1 += double_bias
-
-                if False:
-                    print '1 log , quant', log_beta[h_index, 0], quantity_0
-                    print '2 log, quant', log_beta[h_index, 1], quantity_1
+                counter_aux_2 = 1
+            
+            counter += counter_aux_1 * counter_aux_2
+            if False:
+                print '1 log , quant', log_beta[h_index, 0], quantity_0
+                print '2 log, quant', log_beta[h_index, 1], quantity_1
 
         x_1 = log_beta[h_index, 0] + quantity_0
         x_2 = log_beta[h_index, 1] + quantity_1
+        statistics1.append(quantity_0)
+        statistics1.append(quantity_1)
         s[h_index, 0] = x_1
         s[h_index, 1] = x_2
-
+        statistics2.append(x_1)
+        statistics2.append(x_2)
+        statistics3.append(np.abs(x_2 - x_1))
+        
+    plt.plot(s)
+    plt.savefig('./figures/figure' + str(iter) + '.png')
+    plt.hold(False)
     o = np.exp(G * s)
 
     to_store[0, :, iter] = o[:, 0]

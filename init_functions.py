@@ -49,16 +49,17 @@ def prob(N_hypercolumns, units_per_hypercolumn, low_noise, X):
     for i in range(units_per_hypercolumn):
         p[:, i] = np.sum(X == i, axis=0)
 
-    p[p == 0] = low_noise
+    p = p * 1.0 / X.shape[0]
+    p[p < low_noise] = low_noise
 
-    return p * 1.0 / X.shape[0]
+    return p
 
 
 def connectivity(N_hypercolumns, units_per_hypercolumn, X,
                  low_noise=10e-10, non_zero=True):
     """
     Calculates the connectivity matrix for a network with
-    N_hypercolumns number of hypercolumns and neurons_per_hyper
+    N_hypercolumns number of  hypercolumns and neurons_per_hyper
     neurons per hypercolumn. It returns a tensor where the first
     two dimensions correspond to the hyercolumn and the last two
     dimensions correspond to the neurons in the hypercolum
@@ -72,14 +73,19 @@ def connectivity(N_hypercolumns, units_per_hypercolumn, X,
     for h_pre in range(N_hypercolumns):
         for h_post in range(h_pre + 1, N_hypercolumns):
 
-            aux = hypercolumn_connection(h_pre, h_post,
-                                         units_per_hypercolumn, p, X)
+            aux = hypercolumn_connection(h_pre, h_post, units_per_hypercolumn,
+                                         p, X)
 
             # Symmetric
             w[h_pre, h_post, ...] = aux
             w[h_post, h_pre, ...] = aux
 
-    return w * 1.0 / X.shape[0], p
+    w = w * 1.0 / X.shape[0]
+
+    if non_zero:
+        w[w < low_noise] = low_noise
+
+    return w, p
 
 
 def hypercolumn_connection(h_pre, h_post, units_per_hypercolumn, p, X):
@@ -99,6 +105,8 @@ def hypercolumn_connection(h_pre, h_post, units_per_hypercolumn, p, X):
 
             if product == 0:
                 h_connectivity[n_i, n_j] = 0
+            elif joint == 0:
+                h_connectivity[n_i, n_j] = 1 / X.shape[0]
             else:
                 h_connectivity[n_i, n_j] = joint / product
 
