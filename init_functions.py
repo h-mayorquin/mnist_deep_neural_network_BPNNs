@@ -68,6 +68,9 @@ def connectivity(N_hypercolumns, units_per_hypercolumn, X,
     w = np.zeros((N_hypercolumns, N_hypercolumns,
                   units_per_hypercolumn, units_per_hypercolumn))
 
+    if (low_noise > 1.0 / X.shape[0]):
+        low_noise = 1.0 / X.shape[0]
+
     p = prob(N_hypercolumns, units_per_hypercolumn, low_noise, X)
 
     for h_pre in range(N_hypercolumns):
@@ -99,14 +102,14 @@ def hypercolumn_connection(h_pre, h_post, units_per_hypercolumn, p, X):
 
     for n_i in range(units_per_hypercolumn):
         for n_j in range(units_per_hypercolumn):
-    
+
             joint = unitary_connection(h_pre, h_post, n_i, n_j, X)
             product = p[h_pre, n_i] * p[h_post, n_j]
 
             if product == 0:
                 h_connectivity[n_i, n_j] = 0
             elif joint == 0:
-                h_connectivity[n_i, n_j] = 1 / X.shape[0]
+                h_connectivity[n_i, n_j] = 1.0 / X.shape[0]
             else:
                 h_connectivity[n_i, n_j] = joint / product
 
