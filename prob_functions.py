@@ -1,6 +1,27 @@
 import numpy as np
 
 
+def p_independent(N_hypercolumns, units_per_hypercolumn,
+                  X, low_noise=10e-10, normalize=True):
+    """
+    This and that
+    """
+
+    p = np.zeros((N_hypercolumns, units_per_hypercolumn))
+
+    for i in range(units_per_hypercolumn):
+        p[:, i] = np.sum(X == i, axis=0)
+
+    if normalize:
+        p = p * 1.0 / X.shape[0]
+        # Add low noise
+        p[p < low_noise] = low_noise
+        # Now we need to normalize
+        p = p / p.sum(axis=1)[:, np.newaxis]
+
+    return p
+
+
 def coincidences(i, j, k, l, X, distribution):
     """
     Caculates the number of coincidences between two distributions
