@@ -1,0 +1,13 @@
+This is a file to learn about testing. In particular what is called doctest
+>>> 2 + 3
+4
+>>> 3 + 3
+6
+>>> import sys
+>>> def test_write():
+...    sys.stdout.write("Hello\n")
+...    return True
+>>> test_write()
+Hello
+True
+

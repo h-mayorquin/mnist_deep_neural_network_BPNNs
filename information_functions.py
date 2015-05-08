@@ -26,7 +26,7 @@ def entropy(prob_dist):
     >>> entropy(np.array((0.5, 0.3))) == entropy(np.array((0.3, 0.5)))
     True
     """
-    return -np.nansum(prob_dist * np.log2(prob_dist))
+    return -np.sum(prob_dist * np.log2(prob_dist))
 
 
 def joint_entropy(prob_dist):
@@ -67,7 +67,7 @@ def joint_entropy(prob_dist):
     >>> joint_entropy(p_joint) <= entropy(p1) + entropy(p2)
     True
     """
-    return -np.nansum(prob_dist * np.log2(prob_dist))
+    return -np.sum(prob_dist * np.log2(prob_dist))
 
 
 def mutual_information(prob1, prob2, prob_joint):
@@ -129,4 +129,16 @@ def mutual_information(prob1, prob2, prob_joint):
     """
     outer = np.outer(prob1, prob2)
 
-    return np.nansum(prob_joint * np.log2(prob_joint / outer))
+    return np.sum(prob_joint * np.log2(prob_joint / outer))
+
+
+def mutual_information2(prob1, prob2, prob_joint):
+    """
+    This and that
+    """
+
+    x1 = entropy(prob1)
+    x2 = entropy(prob2)
+    x3 = joint_entropy(prob_joint)
+
+    return x1 + x2 - x3

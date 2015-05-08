@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from load_binary_files import training_ims, training_labels
-from prob_functions import p_joint
+from prob_functions import joint, p_independent
+from information_functions import entropy, joint_entropy, mutual_information
+from information_functions import mutual_information2
 
 # Select quantity of data to use
 N_data_total = len(training_labels)
@@ -13,98 +15,47 @@ X = training_ims[0:N_to_use]
 Y = training_labels[0:N_to_use]
 N_hypercolumns = X.shape[1]
 units_per_hypercolumn = 2
+distribution = {0: 0, 1: 1, 'no': 3}
+
+powers = np.linspace(1, 20, 40)
+noises = np.power(10, -powers)
+difference = np.zeros(noises.size)
+
+# Normalize
 low_noise = 10e-10
 
 
-def p_independent(N_hypercolumns, units_per_hypercolumn,
-                  X, low_noise=10e-10, normalize=True):
-    """
-    This and that
-    """
-
-    p = np.zeros((N_hypercolumns, units_per_hypercolumn))
-
-    for i in range(units_per_hypercolumn):
-        p[:, i] = np.sum(X == i, axis=0)
-
-    if normalize:
-        p = p * 1.0 / X.shape[0]
-        # Add low noise
-        p[p < low_noise] = low_noise
-        # Now we need to normalize
-        p = p / p.sum(axis=1)[:, np.newaxis]
-
-    return p
+# Single example
+i = 0
+j = 0
 
 p = p_independent(N_hypercolumns, units_per_hypercolumn, X)
-distribution = {0: 0, 1: 1, 'no': 3}
-p_j = p_joint(N_hypercolumns, units_per_hypercolumn, X, distribution)
-# Add noise
-aux = np.copy(p_j)
-p_j[p_j < low_noise] = low_noise
-# Normalize
-normalize = p_j.sum(axis=(2, 3))
-p_j = p_j / normalize[..., np.newaxis, np.newaxis]
+p_i = p[i, :]
+p_j = p[j, :]
+p_joint = joint(i, j, X, distribution, units_per_hypercolumn)
+aux = np.copy(p_joint)
 
+if np.any(p_joint == 0):
+    # Joint
+    p_joint[p_joint < low_noise] = low_noise
+    sum = p_joint.sum()
+    p_joint = p_joint / sum
+    p_i = p_joint.sum(axis=1)
+    p_j = p_joint.sum(axis=0)
 
-def calculate_information(w, p, i, j):
-    log_1 = np.log(w[i, j, 0, 0] / (p[i, 0] * p[j, 0]))
-    log_2 = np.log(w[i, j, 0, 1] / (p[i, 0] * p[j, 1]))
-    log_3 = np.log(w[i, j, 1, 0] / (p[i, 1] * p[j, 0]))
-    log_4 = np.log(w[i, j, 1, 1] / (p[i, 1] * p[j, 1]))
-    x = (w[i, j, 0, 0] * log_1 +
-         w[i, j, 0, 1] * log_2 +
-         w[i, j, 1, 0] * log_3 +
-         w[i, j, 1, 1] * log_4)
+# Calculate the entropies
+x1 = entropy(p_i)
+x2 = entropy(p_j)
+x3 = joint_entropy(p_joint)
 
-    return x
+MI = mutual_information(p_i, p_j, p_joint)
+MI2 = mutual_information2(p_i, p_j, p_joint)
+MI_alt = x1 + x2 - x3
 
-
-def calculate_joint_entr(w, i, j):
-    log_1 = np.log(w[i, j, 0, 0])
-    log_2 = np.log(w[i, j, 0, 1])
-    log_3 = np.log(w[i, j, 1, 0])
-    log_4 = np.log(w[i, j, 1, 1])
-
-    x = (w[i, j, 0, 0] * log_1 +
-         w[i, j, 0, 1] * log_2 +
-         w[i, j, 1, 0] * log_3 +
-         w[i, j, 1, 1] * log_4)
-
-    return x
-
-
-# Calculate the information
-def information_matrix(w, p):
-    N = p.shape[0]
-    I = np.zeros((N, N))
-    for i in xrange(N):
-        for j in xrange(N):
-            I[i, j] = calculate_information(w, p, i, j)
-
-    return I
-
-
-def joint_entr_matrix(w, p):
-    N = p.shape[0]
-    I = np.zeros((N, N))
-    for i in xrange(N):
-        for j in xrange(N):
-            I[i, j] = calculate_joint_entr(w, i, j)
-
-    return I
-
-calculate = True
-if calculate:
-    I = information_matrix(p_j, p)
-    J = -joint_entr_matrix(p_j, p)
-
-D = 1 - I / J
-
-# Visualize mutual information
-plot = True
-if plot:
-    to_plot = D
-    plt.imshow(to_plot, interpolation='nearest', cmap='hot')
-    plt.colorbar()
-    plt.show()
+D1 = x3 - MI
+D2 = x3 - MI2
+print 'MI', MI
+print 'MI2', MI2
+print 'MI_alt', MI_alt
+print np.isclose(MI, MI2)
+print 'distances 1, 2', D1, D2
